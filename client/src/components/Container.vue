@@ -1,58 +1,121 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div class="row">
+    <div class="col-lg-4">
+      <input type="hidden" v-model="url" class="form-control my-2" placeholder="Url">
+      <input type="text" v-model="title" class="form-control my-2" placeholder="Title">
+      <input type="text" v-model="body" class="form-control my-2" placeholder="Body">
+      <div class="d-grid gap-2">
+        <button @click="postBlog" class="btn btn-primary">Submit</button>
+      </div>
+
+    </div>
+    <div class="col-lg-8">
+      <table class="table">
+        <thead>
+        <th>Url</th>
+        <th>Title</th>
+        <th>Body</th>
+        <th>Edit</th>
+        <th>Delete</th>
+        </thead>
+        <tbody>
+        <tr v-for="blog in blogs" v-bind:key="blog.url">
+          <td>{{ blog.url }}</td>
+          <td>{{ blog.title }}</td>
+          <td>{{ blog.body }}</td>
+          <td>
+            <button @click="getOne(blog)" class="btn bn-sm btn-success"><i class="fa fa-pencil"> Edit</i></button>
+          </td>
+          <td>
+            <button @click="deleteOne(blog.url)" class="btn bn-sm btn-danger"><i class="fa fa-trash"> Delete</i>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
-  name: 'HelloWorld',
+  name: 'Container',
   props: {
     msg: String
+  },
+  data() {
+    return {
+      blogs: null,
+      url: '',
+      title: '',
+      body: ''
+    }
+  },
+  mounted() {
+    this.getAll()
+  },
+  methods: {
+    getAll() {
+      axios.get(`http://localhost:8000/blogs/`)
+          .then((res) => {
+            this.blogs = res.data;
+            this.title = "";
+            this.body = "";
+            this.url = "";
+          })
+    },
+    getOne(blog) {
+      this.url = blog.url;
+      this.title = blog.title;
+      this.body = blog.body;
+    },
+    deleteOne(url) {
+      axios.delete(url, {
+        auth: {
+          username: "djangoadmin",
+          password: "bekzod818"
+        }
+      })
+          .then(() => {
+            this.getAll();
+          })
+    },
+    postBlog() {
+      if (this.url == "") {
+        axios.post(`http://localhost:8000/blogs/`,
+            {title: this.title, body: this.body},
+            {
+              auth: {
+                username: "djangoadmin",
+                password: "bekzod818"
+              }
+            },
+        )
+            .then(() => {
+              this.getAll();
+            })
+      } else {
+        axios.put(this.url,
+            {title: this.title, body: this.body},
+            {
+              auth: {
+                username: "djangoadmin",
+                password: "bekzod818"
+              }
+            },
+        )
+            .then(() => {
+              this.getAll();
+            })
+      }
+
+    }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+
 </style>
